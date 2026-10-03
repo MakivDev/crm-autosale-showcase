@@ -1,0 +1,431 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// I. Dictionaries
+// ==========================================
+
+model Currency {
+  id            Int            @id @default(autoincrement())
+  code          String         @unique // UAH, USD, EUR
+  name          String
+  position      Int            @default(0)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  CashRegisters CashRegister[]
+  ExchangeRates ExchangeRate[]
+}
+
+model Make {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  Models    Model[]
+}
+
+model Model {
+  id        Int       @id @default(autoincrement())
+  name      String
+  makeId    Int       @map("make_id")
+  position  Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  Make      Make      @relation(fields: [makeId], references: [id], onDelete: Restrict)
+  Vehicles  Vehicle[]
+}
+
+model FuelType {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  position  Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  Vehicles  Vehicle[]
+}
+
+model DriveType {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  position  Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  Vehicles  Vehicle[]
+}
+
+model Transmission {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  position  Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  Vehicles  Vehicle[]
+}
+
+model DamageType {
+  id             Int             @id @default(autoincrement())
+  name           String          @unique
+  position       Int             @default(0)
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  VehicleDamages VehicleDamage[]
+}
+
+model ExpenseCategory {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  position     Int           @default(0)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  Transactions Transaction[]
+}
+
+model Status {
+  id            Int             @id @default(autoincrement())
+  name          String          @unique
+  position      Int             @default(0)
+  isFinal       Boolean         @default(false) @map("is_final")
+  systemSlug    String?         @unique @map("system_slug")
+  isSystem      Boolean         @default(false) @map("is_system")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  Vehicles      Vehicle[]
+  StatusHistory StatusHistory[]
+}
+
+model RepairType {
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  position   Int         @default(0)
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+  StoRecords StoRecord[]
+}
+
+model PurchaseCountry {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  position  Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  Vehicles  Vehicle[]
+}
+
+// ==========================================
+// II. Users & RBAC
+// ==========================================
+
+model User {
+  id               Int              @id @default(autoincrement())
+  username         String           @unique
+  email            String?          @unique
+  passwordHash     String           @map("password_hash")
+  fullName         String           @map("full_name")
+  telegramUsername String?          @unique @map("telegram_username")
+  telegramChatId   String?          @map("telegram_chat_id")
+  isActive              Boolean          @default(true) @map("is_active")
+  defaultCashRegisterId Int?             @map("default_cash_register_id")
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+  DefaultCashRegister   CashRegister?    @relation("UserDefaultRegister", fields: [defaultCashRegisterId], references: [id], onDelete: SetNull)
+  UserPermissions       UserPermission[]
+  Sessions        Session[]
+  StatusHistory   StatusHistory[]
+  Transactions    Transaction[]
+  ExchangeRates   ExchangeRate[]
+  Comments        Comment[]
+  Notifications   Notification[]
+  Settings        Setting[]
+  AuditLogs       AuditLog[]
+  StoRecords      StoRecord[]
+}
+
+model Permission {
+  id              Int              @id @default(autoincrement())
+  code            String           @unique
+  description     String?
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  UserPermissions UserPermission[]
+}
+
+model UserPermission {
+  userId       Int        @map("user_id")
+  permissionId Int        @map("permission_id")
+  User         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, permissionId])
+  @@map("user_permissions")
+}
+
+model Session {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  tokenHash    String   @unique @map("token_hash")
+  deviceInfo   String?  @map("device_info")
+  ipAddress    String?  @map("ip_address")
+  lastActiveAt DateTime @default(now()) @map("last_active_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// III. Vehicles
+// ==========================================
+
+model Vehicle {
+  id                   Int               @id @default(autoincrement())
+  vin                  String            @unique
+  modelId              Int               @map("model_id")
+  fuelTypeId           Int?              @map("fuel_type_id")
+  driveTypeId          Int?              @map("drive_type_id")
+  transmissionId       Int?              @map("transmission_id")
+  engineVolume         Decimal?          @map("engine_volume") @db.Decimal(10, 2)
+  manufactureYear      Int?              @map("manufacture_year")
+  mileage              Int?
+  notes                String?
+  tags                 String[]
+  customsCost          Decimal?          @map("estimated_customs_cost") @db.Decimal(15, 2)
+  containerNumber      String?           @map("container_number")
+  lotUrl               String?           @map("lot_url")
+  deliveryCost         Decimal?          @map("delivery_cost") @db.Decimal(15, 2)
+  deliveryPaidFromCash Boolean           @default(false) @map("delivery_paid_from_cash")
+  estimatedDeliveryDate DateTime?        @map("estimated_delivery_date") @db.Date
+  currentStatusId      Int               @map("current_status_id")
+  purchaseCountryId    Int?              @map("purchase_country_id")
+  buyerName            String?           @map("buyer_name")
+  buyerPhone           String?           @map("buyer_phone")
+  recommendedSalePrice Decimal?          @map("recommended_sale_price") @db.Decimal(15, 2)
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+  Model                Model             @relation(fields: [modelId], references: [id], onDelete: Restrict)
+  FuelType             FuelType?         @relation(fields: [fuelTypeId], references: [id], onDelete: Restrict)
+  DriveType            DriveType?        @relation(fields: [driveTypeId], references: [id], onDelete: Restrict)
+  Transmission         Transmission?     @relation(fields: [transmissionId], references: [id], onDelete: Restrict)
+  CurrentStatus        Status            @relation(fields: [currentStatusId], references: [id], onDelete: Restrict)
+  PurchaseCountry      PurchaseCountry?  @relation(fields: [purchaseCountryId], references: [id], onDelete: Restrict)
+  Damages              VehicleDamage[]
+  Photos               VehiclePhoto[]
+  Documents            VehicleDocument[]
+  StatusHistory        StatusHistory[]
+  StoRecords           StoRecord[]
+  Transactions         Transaction[]
+  Comments             Comment[]
+}
+
+model VehicleDamage {
+  id           Int            @id @default(autoincrement())
+  vehicleId    Int            @map("vehicle_id")
+  damageTypeId Int            @map("damage_type_id")
+  comment      String
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  Vehicle      Vehicle        @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  DamageType   DamageType     @relation(fields: [damageTypeId], references: [id], onDelete: Restrict)
+  Photos       VehiclePhoto[]
+}
+
+model VehiclePhoto {
+  id           Int            @id @default(autoincrement())
+  vehicleId    Int            @map("vehicle_id")
+  filePath     String         @map("file_path")
+  originalName String         @map("original_name")
+  fileHash     String?        @map("file_hash")
+  isCover      Boolean        @default(false) @map("is_cover")
+  damageId     Int?           @map("damage_id")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  Vehicle      Vehicle        @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  Damage       VehicleDamage? @relation(fields: [damageId], references: [id], onDelete: SetNull)
+}
+
+model VehicleDocument {
+  id           Int      @id @default(autoincrement())
+  vehicleId    Int      @map("vehicle_id")
+  filePath     String   @map("file_path")
+  originalName String   @map("original_name")
+  createdAt    DateTime @default(now()) @map("created_at")
+  Vehicle      Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+}
+
+model StatusHistory {
+  id              Int      @id @default(autoincrement())
+  vehicleId       Int      @map("vehicle_id")
+  statusId        Int      @map("status_id")
+  changedByUserId Int      @map("changed_by_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  Vehicle         Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  Status          Status   @relation(fields: [statusId], references: [id], onDelete: Restrict)
+  User            User     @relation(fields: [changedByUserId], references: [id], onDelete: Restrict)
+}
+
+// ==========================================
+// IV. Finance
+// ==========================================
+
+model CashRegister {
+  id           Int           @id @default(autoincrement())
+  name         String
+  currencyId   Int           @map("currency_id")
+  color        String?
+  balance      Decimal       @default(0) @db.Decimal(15, 2)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  Currency          Currency      @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+  Transactions      Transaction[]
+  StoRecords        StoRecord[]
+  DefaultForUsers   User[]        @relation("UserDefaultRegister")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  DEPOSIT
+  WITHDRAW
+  VEHICLE_INVEST
+  TRANSFER_OUT
+  TRANSFER_IN
+}
+
+model Transaction {
+  id                Int              @id @default(autoincrement())
+  cashRegisterId    Int              @map("cash_register_id")
+  vehicleId         Int?             @map("vehicle_id")
+  expenseCategoryId Int?             @map("expense_category_id")
+  transferId        Int?             @map("transfer_id")
+  type              TransactionType
+  amount            Decimal          @db.Decimal(15, 2)
+  rateUsdSnapshot   Decimal?         @map("rate_usd_snapshot") @db.Decimal(10, 4)
+  rateEurSnapshot   Decimal?         @map("rate_eur_snapshot") @db.Decimal(10, 4)
+  description       String?
+  createdByUserId   Int              @map("created_by_user_id")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  deletedAt         DateTime?        @map("deleted_at")
+  CashRegister      CashRegister     @relation(fields: [cashRegisterId], references: [id], onDelete: Restrict)
+  Vehicle           Vehicle?         @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  ExpenseCategory   ExpenseCategory? @relation(fields: [expenseCategoryId], references: [id], onDelete: Restrict)
+  Transfer          Transfer?        @relation(fields: [transferId], references: [id], onDelete: Restrict)
+  CreatedByUser     User             @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+  Comments          Comment[]
+  StoRecord         StoRecord?
+
+  @@index([deletedAt])
+}
+
+model Transfer {
+  id                  Int           @id @default(autoincrement())
+  factualExchangeRate Decimal?      @map("factual_exchange_rate") @db.Decimal(10, 4)
+  notes               String?
+  createdAt           DateTime      @default(now()) @map("created_at")
+  Transactions        Transaction[]
+}
+
+model ExchangeRate {
+  id              Int      @id @default(autoincrement())
+  currencyId      Int      @map("currency_id")
+  rateToUah       Decimal  @map("rate_to_uah") @db.Decimal(10, 4)
+  effectiveMonth  DateTime @map("effective_month") @db.Date
+  createdByUserId Int      @map("created_by_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  Currency        Currency @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+  CreatedByUser   User     @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([currencyId, createdAt(sort: Desc)])
+}
+
+// ==========================================
+// V. STO
+// ==========================================
+
+model StoRecord {
+  id             Int          @id @default(autoincrement())
+  vehicleId      Int          @map("vehicle_id")
+  repairTypeId   Int          @map("repair_type_id")
+  cashRegisterId Int          @map("cash_register_id")
+  registerAmount Decimal      @map("register_amount") @db.Decimal(15, 2)
+  amountUsd      Decimal      @map("amount_usd") @db.Decimal(15, 2)
+  customRate     Decimal?     @map("custom_rate") @db.Decimal(10, 4)
+  comment        String?
+  transactionId  Int?         @unique @map("transaction_id")
+  userId         Int          @map("user_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  Vehicle        Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  RepairType     RepairType   @relation(fields: [repairTypeId], references: [id], onDelete: Restrict)
+  CashRegister   CashRegister @relation(fields: [cashRegisterId], references: [id], onDelete: Restrict)
+  Transaction    Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  User           User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+}
+
+// ==========================================
+// VI. System
+// ==========================================
+
+enum NotificationType {
+  CRITICAL
+  WARNING
+}
+
+model Notification {
+  id          Int              @id @default(autoincrement())
+  userId      Int              @map("user_id")
+  type        NotificationType
+  title       String
+  message     String
+  isDismissed Boolean          @default(false) @map("is_dismissed")
+  entityType  String?          @map("entity_type")
+  entityId    Int?             @map("entity_id")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  User        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id            Int          @id @default(autoincrement())
+  vehicleId     Int?         @map("vehicle_id")
+  transactionId Int?         @map("transaction_id")
+  userId        Int          @map("user_id")
+  text          String
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  Vehicle       Vehicle?     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  Transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  User          User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+}
+
+model Setting {
+  id              Int      @id @default(autoincrement())
+  key             String   @unique
+  value           String
+  updatedByUserId Int?     @map("updated_by_user_id")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  UpdatedByUser   User?    @relation(fields: [updatedByUserId], references: [id], onDelete: Restrict)
+}
+
+model StockCapitalSnapshot {
+  id               Int      @id @default(autoincrement())
+  date             DateTime @unique @db.Date
+  stockCapitalUsd  Decimal  @map("stock_capital_usd") @db.Decimal(15, 2)
+  cashTotalUsd     Decimal  @map("cash_total_usd") @db.Decimal(15, 2)
+  cashPlusStockUsd Decimal  @map("cash_plus_stock_usd") @db.Decimal(15, 2)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@map("StockCapitalSnapshot")
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?     @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   Int      @map("entity_id")
+  details    Json
+  createdAt  DateTime @default(now()) @map("created_at")
+  User       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}

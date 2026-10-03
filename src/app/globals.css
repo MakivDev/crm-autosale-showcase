@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-background: #f3f4f6;
+    --color-surface: #ffffff;
+    --color-surface-hover: #f9fafb;
+    --color-border: #e5e7eb;
+    --color-accent: #0891b2;
+    --color-text-primary: #111827;
+    --color-text-secondary: #6b7280;
+    --color-overlay: rgba(0, 0, 0, 0.45);
+    --shadow-elevated: 0 8px 40px rgba(0, 0, 0, 0.12);
+    --shadow-elevated-sm: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --shadow-elevated-lg: 0 4px 32px rgba(0, 0, 0, 0.14);
+    --shadow-neon: 0 0 10px rgba(8, 145, 178, 0.25), 0 0 20px rgba(8, 145, 178, 0.08) inset;
+    --color-accent-on: #ffffff;
+    --chart-grid: rgba(17, 24, 39, 0.08);
+    --chart-axis: rgba(17, 24, 39, 0.14);
+    --chart-label: #6b7280;
+    --chart-income: rgba(22, 163, 74, 0.78);
+    --chart-expense: rgba(220, 38, 38, 0.72);
+    --chart-line: rgba(8, 145, 178, 0.85);
+    --chart-positive: rgb(22, 163, 74);
+    --chart-negative: rgb(220, 38, 38);
+    --chart-zero: rgba(17, 24, 39, 0.12);
+  }
+
+  .dark {
+    --color-background: #030303;
+    --color-surface: #0a0a0a;
+    --color-surface-hover: #141414;
+    --color-border: #1f1f1f;
+    --color-accent: #00f2fe;
+    --color-text-primary: #f0f0f0;
+    --color-text-secondary: #6b7280;
+    --color-overlay: rgba(0, 0, 0, 0.7);
+    --shadow-elevated: 0 8px 40px rgba(0, 0, 0, 0.8);
+    --shadow-elevated-sm: 0 4px 20px rgba(0, 0, 0, 0.5);
+    --shadow-elevated-lg: 0 4px 32px rgba(0, 0, 0, 0.7);
+    --shadow-neon: 0 0 10px rgba(0, 242, 254, 0.3), 0 0 20px rgba(0, 242, 254, 0.1) inset;
+    --color-accent-on: #030303;
+    --chart-grid: rgba(255, 255, 255, 0.06);
+    --chart-axis: rgba(255, 255, 255, 0.1);
+    --chart-label: #9ca3af;
+    --chart-income: rgba(34, 197, 94, 0.55);
+    --chart-expense: rgba(239, 68, 68, 0.55);
+    --chart-line: rgba(0, 242, 254, 0.65);
+    --chart-positive: rgb(34, 197, 94);
+    --chart-negative: rgb(239, 68, 68);
+    --chart-zero: rgba(255, 255, 255, 0.12);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-textPrimary antialiased selection:bg-accent selection:text-accentOn;
+  }
+
+  button,
+  a,
+  [role='button'],
+  .cursor-pointer,
+  input[type='button'],
+  input[type='submit'],
+  label[for] {
+    touch-action: manipulation;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .themed-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--color-border) 85%, var(--color-text-secondary)) transparent;
+  }
+  .themed-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .themed-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .themed-scrollbar::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--color-border) 70%, var(--color-text-secondary));
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  .themed-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  }
+  .dark .themed-scrollbar {
+    scrollbar-color: #2a2a2a transparent;
+  }
+  .dark .themed-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #2a2a2a;
+  }
+  .dark .themed-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #3f3f3f;
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .shadow-elevated-sm {
+    box-shadow: var(--shadow-elevated-sm);
+  }
+
+  .shadow-elevated-lg {
+    box-shadow: var(--shadow-elevated-lg);
+  }
+}
+
+@keyframes dashPeriodIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes dashPeriodIn {
+    from { opacity: 1; transform: none; }
+    to { opacity: 1; transform: none; }
+  }
+}

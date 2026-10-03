@@ -1,0 +1,36 @@
+import { PrismaClient } from '@prisma/client'
+
+export async function truncateAll(prisma: PrismaClient) {
+  await prisma.$transaction([
+    prisma.comment.deleteMany(),
+    prisma.stoRecord.deleteMany(),
+    prisma.vehiclePhoto.deleteMany(),
+    prisma.vehicleDocument.deleteMany(),
+    prisma.vehicleDamage.deleteMany(),
+    prisma.statusHistory.deleteMany(),
+    prisma.transaction.deleteMany(),
+    prisma.vehicle.deleteMany(),
+    prisma.transfer.deleteMany(),
+    prisma.exchangeRate.deleteMany(),
+    prisma.notification.deleteMany(),
+    prisma.auditLog.deleteMany(),
+    prisma.session.deleteMany(),
+    prisma.userPermission.deleteMany(),
+    prisma.model.deleteMany(),
+    prisma.make.deleteMany(),
+    prisma.cashRegister.deleteMany(),
+    prisma.currency.deleteMany(),
+    prisma.status.deleteMany(),
+    prisma.expenseCategory.deleteMany(),
+    prisma.fuelType.deleteMany(),
+    prisma.driveType.deleteMany(),
+    prisma.transmission.deleteMany(),
+    prisma.damageType.deleteMany(),
+    prisma.repairType.deleteMany(),
+    prisma.purchaseCountry.deleteMany(),
+    prisma.permission.deleteMany(),
+    prisma.setting.deleteMany(),
+    prisma.user.deleteMany(),
+    prisma.stockCapitalSnapshot.deleteMany(),
+  ])
+}
